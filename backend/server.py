@@ -116,6 +116,8 @@ def logout():
     # Redirect to login page
     return redirect(url_for('login'))
 
+import re
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     msg = ''
@@ -125,7 +127,7 @@ def register():
         email = request.form['email']
         
         cursor = connection.cursor()
-        cursor.execute('SELECT * FROM accounts WHERE username = %sOR email = %s', (username, email))
+        cursor.execute('SELECT * FROM accounts WHERE username = %s OR email = %s', (username, email))
         account = cursor.fetchone()
 
         if account:
@@ -134,10 +136,10 @@ def register():
             msg = 'Invalid email address!'
         elif not re.match(r'[A-Za-z0-9]+', username):
             msg = 'Username must contain only characters and numbers!'
-        elif not username or not password or not email:
-               msg = 'Please fill out the form!'
+        elif not (len(password) >= 8 and re.search(r'[a-z]', password) and re.search(r'[A-Z]', password) and re.search(r'[0-9]', password) and re.search(r'[!@#$%^&*(),.?":{}|<>]', password)):
+            msg = 'Password must be at least 8 characters long and contain at least one lowercase letter, one uppercase letter, one number, and one special character!'
         else:
-                # Hash the password
+            # Hash the password
             hash = password + app.secret_key
             hash = hashlib.sha1(hash.encode())
             password = hash.hexdigest()
@@ -149,6 +151,7 @@ def register():
     elif request.method == 'POST':
         msg = 'Please fill out the form!'
     return render_template('register.html', msg=msg)
+
 	
 @app.route('/getEmployees', methods=['GET'])
 def get_employees():
